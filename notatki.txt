@@ -1,0 +1,13 @@
+gra clicker "Pogromca ECTS"
+przedmioty:
+OiAK
+JP
+PPS
+PEA
+SDIZO
+
+layout:
+przyciski z info o koszcie uprgade (przycisk upgrade) + ile zarabiamy + timer + zmiana koloru kafelka
+I suma ects
+ograniczenie do max liczby
+cel: dobijasz do jakiejś liczby i kończysz studia (możesz zacząć od nowa)
