@@ -13,6 +13,7 @@ class Business:
         self.is_running = False
         self.start_cost = cost
         self.automatic = False
+        self.bought = False
 
     def upgrade_cost(self):
         return int(self.cost * 1.5)
@@ -46,7 +47,10 @@ class Business:
         i = 0
         for business in game.businesses:
             if game.total >= business.cost:
-                window[f'upg{i}'].update(disabled=False)
+                if business.bought:
+                    window[f'upg{i}'].update(disabled=False)
+                else:
+                    window[f'buy{i}'].update(disabled=False)
             if game.total >= 10 * business.start_cost and not business.automatic:
                 window[f'aut{i}'].update(disabled=False)
             i += 1
@@ -60,8 +64,13 @@ class Business:
             print(f"Upgraded {self.name} to level {self.level}!")
             i = 0
             for business in game.businesses:
-                if game.total <= business.cost:
-                    window[f'upg{i}'].update(disabled=True)
+                if game.total < business.cost:
+                    if business.bought:
+                        window[f'upg{i}'].update(disabled=True)
+                    else:
+                        window[f'buy{i}'].update(disabled=True)
+                if game.total < 10 * business.start_cost:
+                    window[f'aut{i}'].update(disabled=True)
                 i += 1
 
 
@@ -73,7 +82,7 @@ class Game:
             Business("JP", 100, 10, 2),
             Business("PPS", 1000, 100, 3),
             Business("PEA", 5000, 500, 5),
-            Business("SDIZO", 10000, 1000000, 10)
+            Business("SDIZO", 10000, 1000000000000, 10)
         ]
         self.is_running = False
 
@@ -83,11 +92,6 @@ class Game:
 
     def run(self):
         time.sleep(1)
-        # while self.is_running:
-        # time.sleep()
-        # threading.Thread(target=self.businesses[0].start())
-        # threading.Thread(target=self.businesses[1].start())
-        # threading.Thread(target=self.businesses[2].start())
 
     def stop(self):
         self.is_running = False
@@ -99,7 +103,10 @@ class Game:
         i = 0
         for business in game.businesses:
             if game.total <= business.cost:
-                window[f'upg{i}'].update(disabled=True)
+                if business.bought:
+                    window[f'upg{i}'].update(disabled=True)
+                else:
+                    window[f'buy{i}'].update(disabled=True)
             i += 1
 
     def upgrade_business(self, business):
@@ -110,22 +117,23 @@ if __name__ == "__main__":
     game = Game()
     game.start()
     command = 0
+    game.businesses[0].bought = True
     sg.theme('DarkAmber')
     layout = [[sg.Text('', key='ects'), sg.Text('ECTS')],
               [sg.Button('Click', key='cli0'), sg.Button('buy OiAK', key='buy0', disabled=True),
                sg.Button('Upgrade OiAK', key='upg0', disabled=True), sg.Button("Buy auto", key='aut0', disabled=True),
                sg.Text('OiAK'),
                sg.Text(game.businesses[0].cost, key='cost0')],
-              [sg.Button('Click', key='cli1', disabled=True), sg.Button('buy JP', key='buy1'),
+              [sg.Button('Click', key='cli1', disabled=True), sg.Button('buy JP', key='buy1', disabled=True),
                sg.Button('Upgrade JP', key='upg1', disabled=True), sg.Button("Buy auto", key='aut1', disabled=True),
                sg.Text('JP'), sg.Text(game.businesses[1].cost, key='cost1')],
-              [sg.Button('Click', key='cli2', disabled=True), sg.Button('buy PPS', key='buy2'),
+              [sg.Button('Click', key='cli2', disabled=True), sg.Button('buy PPS', key='buy2', disabled=True),
                sg.Button('Upgrade PPS', key='upg2', disabled=True), sg.Button("Buy auto", key='aut2', disabled=True),
                sg.Text('PPS'), sg.Text(game.businesses[2].cost, key='cost2')],
-              [sg.Button('Click', key='cli3', disabled=True), sg.Button('buy PEA', key='buy3'),
+              [sg.Button('Click', key='cli3', disabled=True), sg.Button('buy PEA', key='buy3', disabled=True),
                sg.Button('Upgrade PEA', key='upg3', disabled=True), sg.Button("Buy auto", key='aut3', disabled=True),
                sg.Text('PEA'), sg.Text(game.businesses[3].cost, key='cost3')],
-              [sg.Button('Click', key='cli4', disabled=True), sg.Button('buy SDIZO', key='buy4'),
+              [sg.Button('Click', key='cli4', disabled=True), sg.Button('buy SDIZO', key='buy4', disabled=True),
                sg.Button('Upgrade SDIZO', key='upg4', disabled=True), sg.Button("Buy auto", key='aut4', disabled=True),
                sg.Text('SDIZO'), sg.Text(game.businesses[4].cost, key='cost4')]]
     window = sg.Window('Window Title', layout)
@@ -137,10 +145,9 @@ if __name__ == "__main__":
         iter = int(event[3:5:1])
         if command == "buy":
             if game.total >= game.businesses[iter].cost:
-                game.buy_business(game.businesses[iter])
+                game.businesses[iter].bought = True
                 window[f'buy{iter}'].update(disabled=True)
                 window[f'cli{iter}'].update(disabled=False)
-                # TODO - make buy auto button work properly
                 window['ects'].update(f'{game.total}')
         elif command == "upg":
             if game.total >= game.businesses[iter].cost:
@@ -150,7 +157,6 @@ if __name__ == "__main__":
         elif command == "cli":
             game.businesses[iter].earn()
             # TODO - make clicks slower
-            # TODO - make not bought businesses disabled
         elif command == "aut":
             if game.total >= 10 * game.businesses[iter].start_cost:
                 window[f'cli{iter}'].update(disabled=True)
