@@ -79,6 +79,7 @@ class Business:
 
 # Function that checks if it is possible to buy a new business
 def buy_business(business):
+    j=0
     if game.total > game.businesses[j].cost:
         game.total -= business.cost
         business.start()
