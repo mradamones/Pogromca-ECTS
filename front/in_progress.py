@@ -4,7 +4,7 @@ import sys
 
 from PyQt5.QtGui import QFont, QPixmap
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QVBoxLayout, QWidget, QHBoxLayout
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 
 
 class Business:
@@ -46,8 +46,13 @@ class Business:
         earnings = self.earnings * self.level
         game.total += earnings
         window.ects_label.setText(str(game.total))
-        print(f"Earned {earnings} from {self.name}!")
-        print(f"Now you have {game.total}!")
+        #print(f"Earned {earnings} from {self.name}!")
+        #print(f"Now you have {game.total}!")
+
+
+def check_buy():
+    while True:
+        time.sleep(0.1)
         i = 0
         for business in game.businesses:
             if game.total >= business.cost:
@@ -55,43 +60,38 @@ class Business:
                     window.upgrade_buttons[i].setEnabled(True)
                 else:
                     window.buy_buttons[i].setEnabled(True)
-            if game.total >= 10 * business.start_cost and not business.automatic:
+            else:
+                if business.bought:
+                    window.upgrade_buttons[i].setEnabled(False)
+                    window.auto_buttons[i].setEnabled(False)
+                else:
+                    window.buy_buttons[i].setEnabled(False)
+            if game.total >= 10 * business.start_cost and not business.automatic and business.bought:
                 window.auto_buttons[i].setEnabled(True)
             i += 1
 
-    # Function with upgrading businesses and updating current total money value
-    def upgrade(self):
-        if game.total >= self.cost:
-            game.total -= self.cost
-            self.cost = self.upgrade_cost()
-            self.earnings = self.upgrade_earnings()
-            self.level += 1
-            print(f"Upgraded {self.name} to level {self.level}!")
-            i = 0
-            for business in game.businesses:
-                if game.total < business.cost:
-                    if business.bought:
-                        window.upgrade_buttons[i].setEnabled(False)
-                    else:
-                        window.buy_buttons[i].setEnabled(False)
-                if game.total < 10 * business.start_cost:
-                    window.auto_buttons[i].setEnabled(False)
-                i += 1
+
+def buy_new(business):
+    if game.total >= business.cost:
+        game.total -= business.cost
+        business.bought = True
+
+
+def upgrade(bus):
+    if game.total >= bus.cost:
+        game.total -= bus.cost
+        bus.cost = bus.upgrade_cost()
+        bus.earnings = bus.upgrade_earnings()
+        bus.level += 1
+        print(f"Upgraded {bus.name} to level {bus.level}!")
 
 
 # Function that checks if it is possible to buy a new business
-def buy_business(business):
-    if game.total > game.businesses[j].cost:
-        game.total -= business.cost
-        business.start()
-    i = 0
-    for business in game.businesses:
-        if game.total <= business.cost:
-            if business.bought:
-                window.upgrade_buttons[i].setEnabled(False)
-            else:
-                window.buy_buttons[i].setEnabled(False)
-        i += 1
+def buy_auto(bus):
+    if game.total >= 10 * bus.start_cost:
+        game.total -= 10 * bus.start_cost
+        bus.start()
+        bus.automatic = True
 
 
 # TODO - move elements from main to run
@@ -121,6 +121,9 @@ class Game:
 
 
 class MainWindow(QMainWindow):
+    # TODO - add level number for every business (label)
+    # TODO - add buy/upgrade and autobuy price for every business (label)
+    # TODO - add earnings per second from every business (labels?)
     def __init__(self):
         super().__init__()
         self.setWindowTitle("POGROMCA ECTS")
@@ -174,11 +177,11 @@ class MainWindow(QMainWindow):
         ects_label.setStyleSheet("color: green; ")
         lines_layout.addWidget(ects_label)
 
-
         # ----------------------------------------- koniec zmian
 
         self.ects_label = QLabel("0")
-        self.lines_layout.addWidget(self.ects_label)
+        self.layout.addWidget(self.ects_label)
+        # self.lines_layout.addWidget(self.ects_label)
 
         self.buttons = []
         self.buy_buttons = []
@@ -203,6 +206,7 @@ class MainWindow(QMainWindow):
             # reszte wrzucic do line_layoutu z formatowaniem z front.py
             button = QPushButton(f"Click {i}")
             button.clicked.connect(self.on_click)
+            button.setEnabled(False)
             self.buttons.append(button)
             self.layout.addWidget(button)
 
@@ -225,33 +229,34 @@ class MainWindow(QMainWindow):
             self.layout.addWidget(auto_button)
 
         self.setCentralWidget(self.widget)
+        self.buttons[0].setEnabled(True)
 
     def on_click(self):
         index = self.buttons.index(self.sender())
         game.businesses[index].earn()
+        self.buttons[index].setEnabled(False)
+        QTimer.singleShot(1000 * game.businesses[index].bus_delay, lambda: self.buttons[index].setEnabled(True))
 
     def on_buy(self):
         index = self.buy_buttons.index(self.sender())
         if game.total >= game.businesses[index].cost:
-            game.businesses[index].bought = True
             self.buy_buttons[index].setEnabled(False)
             self.buttons[index].setEnabled(True)
+            buy_new(game.businesses[index])
             self.ects_label.setText(str(game.total))
 
     def on_upgrade(self):
         index = self.upgrade_buttons.index(self.sender())
         if game.total >= game.businesses[index].cost:
-            game.businesses[index].upgrade()
-            self.upgrade_buttons[index].setEnabled(False)
+            upgrade(game.businesses[index])
             self.ects_label.setText(str(game.total))
 
     def on_auto(self):
         index = self.auto_buttons.index(self.sender())
         if game.total >= 10 * game.businesses[index].start_cost:
             self.buttons[index].setEnabled(False)
-            buy_business(game.businesses[index])
+            buy_auto(game.businesses[index])
             self.auto_buttons[index].setEnabled(False)
-            game.businesses[index].automatic = True
 
 
 if __name__ == "__main__":
@@ -259,6 +264,10 @@ if __name__ == "__main__":
     game.start()
     command = 0
     game.businesses[0].bought = True
+
+    buy_thread = threading.Thread(target=check_buy, daemon=True)
+    buy_thread.start()
+
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
