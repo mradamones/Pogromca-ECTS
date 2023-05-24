@@ -9,7 +9,7 @@ from PyQt5.QtCore import Qt, QTimer
 
 class Business:
     # Creating business with own name, basic upgrade cost, basic earnings and time needed for revenue
-    def __init__(self, name, cost, earnings, bus_delay):
+    def __init__(self, name, cost, earnings, bus_delay, lock):
         self.name = name
         self.cost = cost
         self.earnings = earnings
@@ -19,6 +19,7 @@ class Business:
         self.start_cost = cost
         self.automatic = False
         self.bought = False
+        self.lock = lock
 
     # Increasing upgrade cost at every level
     def upgrade_cost(self):
@@ -44,8 +45,9 @@ class Business:
     # Function with earning mechanism and unlocking upgrades
     def earn(self):
         earnings = self.earnings * self.level
-        game.total += earnings
-        window.ects_label.setText(str(game.total))
+        with self.lock:
+            game.total += earnings
+            window.ects_label.setText(str(game.total))
         #print(f"Earned {earnings} from {self.name}!")
         #print(f"Now you have {game.total}!")
 
@@ -96,19 +98,21 @@ def buy_auto(bus):
 
 # TODO - move elements from main to run
 def run():
-    time.sleep(1)
+    while game.is_running:
+        time.sleep(1)
 
 
 class Game:
     # Creating game with list of businesses and total amount of money
     def __init__(self):
         self.total = 0
+        self.lock = threading.Lock()
         self.businesses = [
-            Business("OiAK", 10, 1, 1),
-            Business("JP", 100, 10, 2),
-            Business("PPS", 1000, 100, 3),
-            Business("PEA", 5000, 500, 5),
-            Business("SDIZO", 10000, 1000000000000, 10)
+            Business("OiAK", 10, 1, 1, self.lock),
+            Business("JP", 100, 10, 2, self.lock),
+            Business("PPS", 1000, 100, 3, self.lock),
+            Business("PEA", 5000, 500, 5, self.lock),
+            Business("SDIZO", 10000, 1000000000000, 10, self.lock)
         ]
         self.is_running = False
 
@@ -260,7 +264,10 @@ class MainWindow(QMainWindow):
 
 
 if __name__ == "__main__":
+    lock = threading.Lock()
     game = Game()
+    for business in game.businesses:
+        business = Business(business.name, business.cost, business.earnings, business.bus_delay, lock)
     game.start()
     command = 0
     game.businesses[0].bought = True
