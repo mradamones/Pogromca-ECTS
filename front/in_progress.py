@@ -136,7 +136,6 @@ class MainWindow(QMainWindow):
         self.widget = QWidget()
         self.layout = QHBoxLayout(self.widget)
 
-        # -------------------------------------- zmiany time
 
         # Tworzenie widgetu kolumny po lewej stronie
         column_widget = QWidget()
@@ -181,11 +180,10 @@ class MainWindow(QMainWindow):
         ects_label.setStyleSheet("color: green; ")
         lines_layout.addWidget(ects_label)
 
-        # ----------------------------------------- koniec zmian
 
-        self.ects_label = QLabel("0")
-        self.layout.addWidget(self.ects_label)
-        # self.lines_layout.addWidget(self.ects_label)
+        ects_label = QLabel("0")
+        lines_layout.addWidget(ects_label)
+        # self.layout.addWidget(self.ects_label)
 
         self.buttons = []
         self.buy_buttons = []
@@ -193,44 +191,47 @@ class MainWindow(QMainWindow):
         self.auto_buttons = []
 
         for i, business in enumerate(game.businesses):
-            # -----------------------------------------------zmiany2
             line_widget = QWidget()
             line_layout = QHBoxLayout(line_widget)
 
             line_widget.setStyleSheet("background-color: #434343;border: 2px solid black;")
 
-            label1 = QLabel(f'   Kurs {i}   ')
+            label1 = QLabel(f'   Kurs {business.name}   ')
             font = QFont("Verdana", 10)
             label1.setFont(font)
             label1.setAlignment(Qt.AlignCenter)
             label1.setStyleSheet("color: white;")
             line_layout.addWidget(label1)
-            # -----------------------------------------------zmiany2 end
 
-            # reszte wrzucic do line_layoutu z formatowaniem z front.py
-            button = QPushButton(f"Click {i}")
+            button = QPushButton()
             button.clicked.connect(self.on_click)
             button.setEnabled(False)
             self.buttons.append(button)
-            self.layout.addWidget(button)
+            self.line_layout.addWidget(button)
 
-            buy_button = QPushButton(f"Buy {business.name}")
+            buy_button = QPushButton()
             buy_button.clicked.connect(self.on_buy)
             buy_button.setEnabled(False)
             self.buy_buttons.append(buy_button)
-            self.layout.addWidget(buy_button)
+            self.line_layout.addWidget(buy_button)
 
-            upgrade_button = QPushButton(f"Upgrade {business.name}")
+            upgrade_button = QPushButton()
             upgrade_button.clicked.connect(self.on_upgrade)
             upgrade_button.setEnabled(False)
             self.upgrade_buttons.append(upgrade_button)
-            self.layout.addWidget(upgrade_button)
+            self.line_layout.addWidget(upgrade_button)
 
-            auto_button = QPushButton(f"Buy auto {business.name}")
+            auto_button = QPushButton()
             auto_button.clicked.connect(self.on_auto)
             auto_button.setEnabled(False)
             self.auto_buttons.append(auto_button)
-            self.layout.addWidget(auto_button)
+            self.line_layout.addWidget(auto_button)
+
+            # Dodawanie kolumny do głównego układu
+            self.lines_layout.addWidget(line_widget)
+
+        # Dodawanie lines do głównego układu
+        self.layout.addWidget(lines_widget)
 
         self.setCentralWidget(self.widget)
         self.buttons[0].setEnabled(True)
@@ -279,3 +280,4 @@ if __name__ == "__main__":
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
+
