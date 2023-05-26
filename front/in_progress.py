@@ -2,7 +2,7 @@ import threading
 import time
 import sys
 
-from PyQt5.QtGui import QFont, QPixmap
+from PyQt5.QtGui import QFont, QPixmap, QIcon, QPalette, QColor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QVBoxLayout, QWidget, QHBoxLayout
 from PyQt5.QtCore import Qt, QTimer, QSize
 
@@ -201,24 +201,32 @@ class MainWindow(QMainWindow):
             button = QPushButton()
             button.clicked.connect(self.on_click)
             button.setEnabled(False)
+            button.setIcon(QIcon('click.png'))
+            button.setIconSize(QSize(60, 60))
             self.buttons.append(button)
             line_layout.addWidget(button)
 
             buy_button = QPushButton()
             buy_button.clicked.connect(self.on_buy)
             buy_button.setEnabled(False)
+            buy_button.setIcon(QIcon('buy.png'))
+            buy_button.setIconSize(QSize(60, 60))
             self.buy_buttons.append(buy_button)
             line_layout.addWidget(buy_button)
 
             upgrade_button = QPushButton()
             upgrade_button.clicked.connect(self.on_upgrade)
             upgrade_button.setEnabled(False)
+            upgrade_button.setIcon(QIcon('upgrade.png'))
+            upgrade_button.setIconSize(QSize(60, 60))
             self.upgrade_buttons.append(upgrade_button)
             line_layout.addWidget(upgrade_button)
 
             auto_button = QPushButton()
             auto_button.clicked.connect(self.on_auto)
             auto_button.setEnabled(False)
+            auto_button.setIcon(QIcon('auto.png'))
+            auto_button.setIconSize(QSize(60, 60))
             self.auto_buttons.append(auto_button)
             line_layout.addWidget(auto_button)
 
@@ -230,6 +238,24 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(self.widget)
         self.buttons[0].setEnabled(True)
+
+        # Ustawianie tła na ciemnoszare
+        palette = self.palette()
+        palette.setColor(QPalette.Window, QColor(50, 50, 50))
+        self.setPalette(palette)
+
+        # Tworzenie stopki
+        footer_widget = QWidget()
+        footer_layout = QHBoxLayout(footer_widget)
+
+        # Dodawanie napisu w stopce
+        copyright_label = QLabel("\n© Pogromcy - rights reserved.")
+        font = QFont("Verdana", 10)
+        copyright_label.setFont(font)
+        footer_layout.addWidget(copyright_label)
+
+        # Dodawanie stopki
+        lines_layout.addWidget(footer_widget)
 
     def on_click(self):
         index = self.buttons.index(self.sender())
