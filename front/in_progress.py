@@ -2,13 +2,13 @@ import threading
 import time
 import sys
 
-from PyQt5.QtGui import QFont, QPixmap
+from PyQt5.QtGui import QFont, QPixmap, QIcon, QPalette, QColor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QVBoxLayout, QWidget, QHBoxLayout
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt, QTimer, QSize
 
 
 class Business:
-    # Creating business with own name, basic upgrade cost, basic earnings and time needed for revenue
+    # Tworzenie biznesu z nazwą, kosztem podstawowej aktualizacji, podstawowym zyskiem i czasem potrzebnym na generowanie przychodu
     def __init__(self, name, cost, earnings, bus_delay, lock):
         self.name = name
         self.cost = cost
@@ -21,15 +21,15 @@ class Business:
         self.bought = False
         self.lock = lock
 
-    # Increasing upgrade cost at every level
+    # Zwiększanie kosztu aktualizacji wraz z poziomem
     def upgrade_cost(self):
         return int(self.cost * 1.5)
 
-    # Increasing revenue at every level
+    # Zwiększanie przychodu wraz z poziomem
     def upgrade_earnings(self):
         return int(self.earnings * 1.2)
 
-    # Starting automatic earning
+    # Uruchamianie automatycznego generowania przychodu
     def start(self):
         self.is_running = True
         threading.Thread(target=self.run, daemon=True).start()
@@ -42,14 +42,12 @@ class Business:
     def stop(self):
         self.is_running = False
 
-    # Function with earning mechanism and unlocking upgrades
+    # Mechanizm generowania przychodu i odblokowywania aktualizacji
     def earn(self):
         earnings = self.earnings * self.level
         with self.lock:
             game.total += earnings
             window.ects_label.setText(str(game.total))
-        #print(f"Earned {earnings} from {self.name}!")
-        #print(f"Now you have {game.total}!")
 
 
 def check_buy():
@@ -88,7 +86,7 @@ def upgrade(bus):
         print(f"Upgraded {bus.name} to level {bus.level}!")
 
 
-# Function that checks if it is possible to buy a new business
+# Funkcja sprawdzająca, czy możliwe jest kupienie nowego biznesu
 def buy_auto(bus):
     if game.total >= 10 * bus.start_cost:
         game.total -= 10 * bus.start_cost
@@ -96,14 +94,14 @@ def buy_auto(bus):
         bus.automatic = True
 
 
-# TODO - move elements from main to run
+# TODO - przenieś elementy z funkcji main do run
 def run():
     while game.is_running:
         time.sleep(1)
 
 
 class Game:
-    # Creating game with list of businesses and total amount of money
+    # Tworzenie gry z listą biznesów i całkowitą ilością pieniędzy
     def __init__(self):
         self.total = 0
         self.lock = threading.Lock()
@@ -134,8 +132,7 @@ class MainWindow(QMainWindow):
         # self.setGeometry(200, 200, 400, 300)
 
         self.widget = QWidget()
-        self.layout = QHBoxLayout(self.widget)
-
+        layout = QHBoxLayout(self.widget)
 
         # Tworzenie widgetu kolumny po lewej stronie
         column_widget = QWidget()
@@ -167,7 +164,7 @@ class MainWindow(QMainWindow):
         column_layout.addWidget(text_label)
 
         # Dodawanie kolumny do głównego układu
-        self.layout.addWidget(column_widget)
+        layout.addWidget(column_widget)
 
         # Tworzenie drugiego widgetu z liniami przycisków i napisów
         lines_widget = QWidget()
@@ -180,10 +177,8 @@ class MainWindow(QMainWindow):
         ects_label.setStyleSheet("color: green; ")
         lines_layout.addWidget(ects_label)
 
-
-        ects_label = QLabel("0")
-        lines_layout.addWidget(ects_label)
-        # self.layout.addWidget(self.ects_label)
+        self.ects_label = QLabel("0")
+        lines_layout.addWidget(self.ects_label)
 
         self.buttons = []
         self.buy_buttons = []
@@ -206,35 +201,61 @@ class MainWindow(QMainWindow):
             button = QPushButton()
             button.clicked.connect(self.on_click)
             button.setEnabled(False)
+            button.setIcon(QIcon('click.png'))
+            button.setIconSize(QSize(60, 60))
             self.buttons.append(button)
-            self.line_layout.addWidget(button)
+            line_layout.addWidget(button)
 
             buy_button = QPushButton()
             buy_button.clicked.connect(self.on_buy)
             buy_button.setEnabled(False)
+            buy_button.setIcon(QIcon('buy.png'))
+            buy_button.setIconSize(QSize(60, 60))
             self.buy_buttons.append(buy_button)
-            self.line_layout.addWidget(buy_button)
+            line_layout.addWidget(buy_button)
 
             upgrade_button = QPushButton()
             upgrade_button.clicked.connect(self.on_upgrade)
             upgrade_button.setEnabled(False)
+            upgrade_button.setIcon(QIcon('upgrade.png'))
+            upgrade_button.setIconSize(QSize(60, 60))
             self.upgrade_buttons.append(upgrade_button)
-            self.line_layout.addWidget(upgrade_button)
+            line_layout.addWidget(upgrade_button)
 
             auto_button = QPushButton()
             auto_button.clicked.connect(self.on_auto)
             auto_button.setEnabled(False)
+            auto_button.setIcon(QIcon('auto.png'))
+            auto_button.setIconSize(QSize(60, 60))
             self.auto_buttons.append(auto_button)
-            self.line_layout.addWidget(auto_button)
+            line_layout.addWidget(auto_button)
 
             # Dodawanie kolumny do głównego układu
-            self.lines_layout.addWidget(line_widget)
+            lines_layout.addWidget(line_widget)
 
         # Dodawanie lines do głównego układu
-        self.layout.addWidget(lines_widget)
+        layout.addWidget(lines_widget)
 
         self.setCentralWidget(self.widget)
         self.buttons[0].setEnabled(True)
+
+        # Ustawianie tła na ciemnoszare
+        palette = self.palette()
+        palette.setColor(QPalette.Window, QColor(50, 50, 50))
+        self.setPalette(palette)
+
+        # Tworzenie stopki
+        footer_widget = QWidget()
+        footer_layout = QHBoxLayout(footer_widget)
+
+        # Dodawanie napisu w stopce
+        copyright_label = QLabel("\n© Pogromcy - rights reserved.")
+        font = QFont("Verdana", 10)
+        copyright_label.setFont(font)
+        footer_layout.addWidget(copyright_label)
+
+        # Dodawanie stopki
+        lines_layout.addWidget(footer_widget)
 
     def on_click(self):
         index = self.buttons.index(self.sender())
@@ -267,17 +288,13 @@ class MainWindow(QMainWindow):
 if __name__ == "__main__":
     lock = threading.Lock()
     game = Game()
-    for business in game.businesses:
-        business = Business(business.name, business.cost, business.earnings, business.bus_delay, lock)
     game.start()
     command = 0
     game.businesses[0].bought = True
 
     buy_thread = threading.Thread(target=check_buy, daemon=True)
-    buy_thread.start()
-
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
+    buy_thread.start()
     sys.exit(app.exec_())
-
