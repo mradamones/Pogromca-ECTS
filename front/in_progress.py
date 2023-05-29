@@ -1,7 +1,7 @@
 import threading
 import time
 import sys
-
+import math
 from PyQt5.QtGui import QFont, QPixmap, QIcon, QPalette, QColor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QVBoxLayout, QWidget, QHBoxLayout
 from PyQt5.QtCore import Qt, QTimer, QSize
@@ -27,7 +27,7 @@ class Business:
 
     # Zwiększanie przychodu wraz z poziomem
     def upgrade_earnings(self):
-        return int(self.earnings * 1.2)
+        return math.ceil(self.earnings * 1.2)
 
     # Uruchamianie automatycznego generowania przychodu
     def start(self):
@@ -44,9 +44,8 @@ class Business:
 
     # Mechanizm generowania przychodu i odblokowywania aktualizacji
     def earn(self):
-        earnings = self.earnings * self.level
         with self.lock:
-            game.total += earnings
+            game.total += self.earnings
             window.ects_label.setText(str(game.total))
 
 
@@ -68,6 +67,8 @@ def check_buy():
                     window.buy_buttons[i].setEnabled(False)
             if game.total >= 10 * business.start_cost and not business.automatic and business.bought:
                 window.auto_buttons[i].setEnabled(True)
+            if business.automatic:
+                window.buttons[i].setEnabled(False)
             i += 1
 
 
@@ -83,7 +84,6 @@ def upgrade(bus):
         bus.cost = bus.upgrade_cost()
         bus.earnings = bus.upgrade_earnings()
         bus.level += 1
-        print(f"Upgraded {bus.name} to level {bus.level}!")
 
 
 # Funkcja sprawdzająca, czy możliwe jest kupienie nowego biznesu
@@ -93,8 +93,6 @@ def buy_auto(bus):
         bus.start()
         bus.automatic = True
 
-
-# TODO - przenieś elementy z funkcji main do run
 def run():
     while game.is_running:
         time.sleep(1)
@@ -103,7 +101,7 @@ def run():
 class Game:
     # Tworzenie gry z listą biznesów i całkowitą ilością pieniędzy
     def __init__(self):
-        self.total = 0
+        self.total = 100000
         self.lock = threading.Lock()
         self.businesses = [
             Business("OiAK", 10, 1, 1, self.lock),
@@ -123,9 +121,7 @@ class Game:
 
 
 class MainWindow(QMainWindow):
-    # TODO - add level number for every business (label)
-    # TODO - add buy/upgrade and autobuy price for every business (label)
-    # TODO - add earnings per second from every business (labels?)
+    # TODO - add timer for every business
     def __init__(self):
         super().__init__()
         self.setWindowTitle("POGROMCA ECTS")
@@ -180,6 +176,9 @@ class MainWindow(QMainWindow):
         self.ects_label = QLabel("0")
         lines_layout.addWidget(self.ects_label)
 
+        self.level_labels = []
+        self.cost_labels = []
+        self.earnings_labels = []
         self.buttons = []
         self.buy_buttons = []
         self.upgrade_buttons = []
@@ -197,6 +196,21 @@ class MainWindow(QMainWindow):
             label1.setAlignment(Qt.AlignCenter)
             label1.setStyleSheet("color: white;")
             line_layout.addWidget(label1)
+
+            level_label = QLabel(f'Level: {business.level}')
+            level_label.setStyleSheet("color: white;")
+            line_layout.addWidget(level_label)
+            self.level_labels.append(level_label)
+
+            cost_label = QLabel(f'Cost: {business.cost}')
+            cost_label.setStyleSheet("color: white;")
+            line_layout.addWidget(cost_label)
+            self.cost_labels.append(cost_label)
+
+            earnings_label = QLabel(f'Earnings/sec: {round(business.earnings / business.bus_delay)}')
+            earnings_label.setStyleSheet("color: white;")
+            line_layout.addWidget(earnings_label)
+            self.earnings_labels.append(earnings_label)
 
             button = QPushButton()
             button.clicked.connect(self.on_click)
@@ -270,12 +284,18 @@ class MainWindow(QMainWindow):
             self.buttons[index].setEnabled(True)
             buy_new(game.businesses[index])
             self.ects_label.setText(str(game.total))
+            # self.level_labels[index].setText(f'Level: {game.businesses[index].level}')
+            # self.cost_labels[index].setText(f'Cost: {game.businesses[index].cost}')
+            # self.earnings_labels[index].setText(f'Earnings/sec: {round(game.businesses[index].earnings / game.businesses[index].bus_delay)}')
 
     def on_upgrade(self):
         index = self.upgrade_buttons.index(self.sender())
         if game.total >= game.businesses[index].cost:
             upgrade(game.businesses[index])
             self.ects_label.setText(str(game.total))
+            self.level_labels[index].setText(f'Level: {game.businesses[index].level}')
+            self.cost_labels[index].setText(f'Cost: {game.businesses[index].cost}')
+            self.earnings_labels[index].setText(f'Earnings/sec: {round(game.businesses[index].earnings / game.businesses[index].bus_delay)}')
 
     def on_auto(self):
         index = self.auto_buttons.index(self.sender())
