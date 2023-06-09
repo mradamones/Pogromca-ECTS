@@ -167,7 +167,7 @@ class MainWindow(QMainWindow):
         image_label.setStyleSheet("border: 2px solid black")
         column_layout.addWidget(image_label)
 
-        # Adding decription to image
+        # Adding description to image
         text_label = QLabel("Twoja postać: Student\n\n\n\n\n\n\n")
         font = QFont("Verdana", 12)
         text_label.setFont(font)
@@ -186,11 +186,17 @@ class MainWindow(QMainWindow):
         ects_label = QLabel("Budżet ECTS:")
         font = QFont("Verdana", 16)
         ects_label.setFont(font)
-        ects_label.setStyleSheet("color: green; ")
+        ects_label.setStyleSheet("color: #0e6926; ")
         lines_layout.addWidget(ects_label)
 
         self.ects_label = QLabel("0")
+        font = QFont("Verdana", 16)
+        self.ects_label.setFont(font)
+        self.ects_label.setStyleSheet("color: #94e0a9; ")
         lines_layout.addWidget(self.ects_label)
+
+        space_label = QLabel("\n")
+        lines_layout.addWidget(space_label)
 
         self.level_labels = []
         self.cost_labels = []
@@ -210,28 +216,45 @@ class MainWindow(QMainWindow):
             label1 = QLabel(f'   Kurs {business.name}   ')
             font = QFont("Verdana", 10)
             label1.setFont(font)
+            label1.setFixedWidth(100)
             label1.setAlignment(Qt.AlignCenter)
             label1.setStyleSheet("color: white;")
             line_layout.addWidget(label1)
 
             level_label = QLabel(f'Level: {business.level}')
             level_label.setStyleSheet("color: white;")
+            font = QFont("Verdana", 10)
+            level_label.setFont(font)
+            level_label.setAlignment(Qt.AlignCenter)
+            level_label.setFixedWidth(80)
             line_layout.addWidget(level_label)
             self.level_labels.append(level_label)
 
             cost_label = QLabel(f'Cost: {business.cost}')
             cost_label.setStyleSheet("color: white;")
+            cost_label.setFixedWidth(110)
+            font = QFont("Verdana", 10)
+            cost_label.setFont(font)
+            cost_label.setAlignment(Qt.AlignCenter)
             line_layout.addWidget(cost_label)
             self.cost_labels.append(cost_label)
 
             earnings_label = QLabel(f'Earnings/sec: '
                                     f'{round(business.earnings / business.bus_delay)}')
             earnings_label.setStyleSheet("color: white;")
+            earnings_label.setFixedWidth(200)
+            font = QFont("Verdana", 10)
+            earnings_label.setFont(font)
+            earnings_label.setAlignment(Qt.AlignCenter)
             line_layout.addWidget(earnings_label)
             self.earnings_labels.append(earnings_label)
 
             timer_label = QLabel(f'Time: {business.dur_time}')
             timer_label.setStyleSheet("color: white;")
+            timer_label.setFixedWidth(80)
+            font = QFont("Verdana", 10)
+            timer_label.setFont(font)
+            timer_label.setAlignment(Qt.AlignCenter)
             line_layout.addWidget(timer_label)
             self.timer_labels.append(timer_label)
 
@@ -286,7 +309,7 @@ class MainWindow(QMainWindow):
         footer_layout = QHBoxLayout(footer_widget)
 
         # Adding text to footer
-        copyright_label = QLabel("\n© Pogromcy - rights reserved.")
+        copyright_label = QLabel("\n                            © Pogromcy - rights reserved.")
         font = QFont("Verdana", 10)
         copyright_label.setFont(font)
         footer_layout.addWidget(copyright_label)
