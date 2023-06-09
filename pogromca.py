@@ -7,7 +7,7 @@ import math
 from PyQt5.QtGui import QFont, QPixmap, QIcon, QPalette, QColor
 # pylint: disable=no-name-in-module
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QLabel,
-                             QPushButton, QVBoxLayout, QWidget, QHBoxLayout)
+                             QPushButton, QVBoxLayout, QWidget, QHBoxLayout, QToolBar, QMessageBox)
 # pylint: disable=no-name-in-module
 from PyQt5.QtCore import Qt, QTimer, QSize
 
@@ -145,6 +145,14 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(QIcon('ikonka.png'))
         self.widget = QWidget()
         layout = QHBoxLayout(self.widget)
+
+        # Adding toolbar
+        self.toolbar = QToolBar()
+        self.addToolBar(self.toolbar)
+        toolbar_stylesheet = "background-color: rgb(237, 223, 223);"
+        self.toolbar.setStyleSheet(toolbar_stylesheet)
+        self.toolbar.actionTriggered.connect(self.show_instructions)
+        self.toolbar.addAction("Instrukcja gry")
 
         # Creating column widget at left side
         column_widget = QWidget()
@@ -316,6 +324,9 @@ class MainWindow(QMainWindow):
 
         # Adding footer to main widget
         lines_layout.addWidget(footer_widget)
+
+    def show_instructions(self):
+        QMessageBox.information(self, "Instrukcja", "ZASADY GRY:\nGra polega na...")
 
     def on_click(self):
         ''' Defines actions after click on earn button '''
