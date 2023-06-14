@@ -7,12 +7,12 @@ import math
 from PyQt5.QtGui import QFont, QPixmap, QIcon, QPalette, QColor
 # pylint: disable=no-name-in-module
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QLabel,
-                             QPushButton, QVBoxLayout, QWidget, QHBoxLayout)
+                             QPushButton, QVBoxLayout, QWidget, QHBoxLayout, QToolBar, QMessageBox)
 # pylint: disable=no-name-in-module
 from PyQt5.QtCore import Qt, QTimer, QSize
 
 # pylint: disable=too-many-instance-attributes
-class Business:
+class Course:
     ''' Creating a business with name, base upgrade cost,
     base earnings, and time required to generate income '''
 
@@ -75,68 +75,68 @@ def check_buy():
     ''' Thread checking if any button should be activated or deactivated '''
     while True:
         time.sleep(0.1)
-        for i, business in enumerate(game.businesses):
-            if game.total >= business.cost:
-                if business.bought:
+        for i, course in enumerate(game.courses):
+            if game.total >= course.cost:
+                if course.bought:
                     window.upgrade_buttons[i].setEnabled(True)
                 else:
                     window.buy_buttons[i].setEnabled(True)
             else:
-                if business.bought:
+                if course.bought:
                     window.upgrade_buttons[i].setEnabled(False)
                     window.auto_buttons[i].setEnabled(False)
                 else:
                     window.buy_buttons[i].setEnabled(False)
-            if (game.total >= 10 * business.start_cost
-                    and not business.automatic and business.bought):
+            if (game.total >= 10 * course.start_cost
+                    and not course.automatic and course.bought):
                 window.auto_buttons[i].setEnabled(True)
             else:
                 window.auto_buttons[i].setEnabled(False)
 
 
-def buy_new(business):
+def buy_new(course):
     ''' Setting up new bought business '''
-    if game.total >= business.cost:
-        game.total -= business.cost
-        business.bought = True
+    if game.total >= course.cost:
+        game.total -= course.cost
+        course.bought = True
 
 
-def upgrade(bus):
+def upgrade(course):
     ''' Editing upgraded business by increasing upgrade cost and income '''
-    if game.total >= bus.cost:
-        game.total -= bus.cost
-        bus.cost = bus.upgrade_cost()
-        bus.earnings = bus.upgrade_earnings()
-        bus.level += 1
+    if game.total >= course.cost:
+        game.total -= course.cost
+        course.cost = course.upgrade_cost()
+        course.earnings = course.upgrade_earnings()
+        course.level += 1
 
 
-def buy_auto(bus):
+def buy_auto(course):
     ''' Function to check if a new business can be purchased '''
-    if game.total >= 10 * bus.start_cost:
-        game.total -= 10 * bus.start_cost
-        bus.start()
-        bus.automatic = True
+    if game.total >= 10 * course.start_cost:
+        game.total -= 10 * course.start_cost
+        course.start()
+        course.automatic = True
 
 # pylint: disable=too-few-public-methods
 
 class Game:
     ''' Creating the game with a list of businesses and the total amount of money '''
     def __init__(self):
-        self.total = 100000
+        self.total = 0
         self.lock = threading.Lock()
-        self.businesses = [
-            Business("OiAK", 10, 1, 1, self.lock, 0),
-            Business("JP", 100, 10, 2, self.lock, 1),
-            Business("PPS", 1000, 100, 3, self.lock, 2),
-            Business("PEA", 5000, 500, 5, self.lock, 3),
-            Business("SDIZO", 10000, 1000000000000, 10, self.lock, 4)
+        self.courses = [
+            Course("OiAK", 10, 1, 1, self.lock, 0),
+            Course("JP", 100, 10, 2, self.lock, 1),
+            Course("PPS", 1000, 100, 3, self.lock, 2),
+            Course("SDiZO", 5000, 500, 5, self.lock, 3),
+            Course("PEA", 10000, 1000, 10, self.lock, 4),
+            Course("SO2", 100000, 5000, 10, self.lock, 5)
         ]
 
 
 # pylint: disable=too-many-instance-attributes
 class MainWindow(QMainWindow):
     ''' Class for window design '''
-    # TODO - make score more visible
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-statements
     def __init__(self):
@@ -145,6 +145,14 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(QIcon('ikonka.png'))
         self.widget = QWidget()
         layout = QHBoxLayout(self.widget)
+
+        # Adding toolbar
+        self.toolbar = QToolBar()
+        self.addToolBar(self.toolbar)
+        toolbar_stylesheet = "background-color: rgb(237, 223, 223);"
+        self.toolbar.setStyleSheet(toolbar_stylesheet)
+        self.toolbar.actionTriggered.connect(self.show_instructions)
+        self.toolbar.addAction("Instruction")
 
         # Creating column widget at left side
         column_widget = QWidget()
@@ -167,8 +175,8 @@ class MainWindow(QMainWindow):
         image_label.setStyleSheet("border: 2px solid black")
         column_layout.addWidget(image_label)
 
-        # Adding decription to image
-        text_label = QLabel("Twoja postać: Student\n\n\n\n\n\n\n")
+        # Adding description to image
+        text_label = QLabel("Your avatar: Student\n\n\n\n\n\n\n")
         font = QFont("Verdana", 12)
         text_label.setFont(font)
         text_label.setAlignment(Qt.AlignCenter)
@@ -183,14 +191,20 @@ class MainWindow(QMainWindow):
         lines_layout = QVBoxLayout(lines_widget)
 
         # Adding 'ECTS' label on top of widget
-        ects_label = QLabel("Budżet ECTS:")
+        ects_label = QLabel("ECTS budget:")
         font = QFont("Verdana", 16)
         ects_label.setFont(font)
-        ects_label.setStyleSheet("color: green; ")
+        ects_label.setStyleSheet("color: #0e6926; ")
         lines_layout.addWidget(ects_label)
 
         self.ects_label = QLabel("0")
+        font = QFont("Verdana", 16)
+        self.ects_label.setFont(font)
+        self.ects_label.setStyleSheet("color: #94e0a9; ")
         lines_layout.addWidget(self.ects_label)
+
+        space_label = QLabel("\n")
+        lines_layout.addWidget(space_label)
 
         self.level_labels = []
         self.cost_labels = []
@@ -201,37 +215,54 @@ class MainWindow(QMainWindow):
         self.upgrade_buttons = []
         self.auto_buttons = []
 
-        for business in game.businesses:
+        for course in game.courses:
             line_widget = QWidget()
             line_layout = QHBoxLayout(line_widget)
 
             line_widget.setStyleSheet("background-color: #434343;border: 2px solid black;")
 
-            label1 = QLabel(f'   Kurs {business.name}   ')
+            label1 = QLabel(f'   Course {course.name}   ')
             font = QFont("Verdana", 10)
             label1.setFont(font)
+            label1.setFixedWidth(100)
             label1.setAlignment(Qt.AlignCenter)
             label1.setStyleSheet("color: white;")
             line_layout.addWidget(label1)
 
-            level_label = QLabel(f'Level: {business.level}')
+            level_label = QLabel(f'Level: {course.level}')
             level_label.setStyleSheet("color: white;")
+            font = QFont("Verdana", 10)
+            level_label.setFont(font)
+            level_label.setAlignment(Qt.AlignCenter)
+            level_label.setFixedWidth(80)
             line_layout.addWidget(level_label)
             self.level_labels.append(level_label)
 
-            cost_label = QLabel(f'Cost: {business.cost}')
+            cost_label = QLabel(f'Cost: {course.cost}')
             cost_label.setStyleSheet("color: white;")
+            cost_label.setFixedWidth(110)
+            font = QFont("Verdana", 10)
+            cost_label.setFont(font)
+            cost_label.setAlignment(Qt.AlignCenter)
             line_layout.addWidget(cost_label)
             self.cost_labels.append(cost_label)
 
             earnings_label = QLabel(f'Earnings/sec: '
-                                    f'{round(business.earnings / business.bus_delay)}')
+                                    f'{round(course.earnings / course.bus_delay)}')
             earnings_label.setStyleSheet("color: white;")
+            earnings_label.setFixedWidth(200)
+            font = QFont("Verdana", 10)
+            earnings_label.setFont(font)
+            earnings_label.setAlignment(Qt.AlignCenter)
             line_layout.addWidget(earnings_label)
             self.earnings_labels.append(earnings_label)
 
-            timer_label = QLabel(f'Time: {business.dur_time}')
+            timer_label = QLabel(f'Time: {course.dur_time}')
             timer_label.setStyleSheet("color: white;")
+            timer_label.setFixedWidth(80)
+            font = QFont("Verdana", 10)
+            timer_label.setFont(font)
+            timer_label.setAlignment(Qt.AlignCenter)
             line_layout.addWidget(timer_label)
             self.timer_labels.append(timer_label)
 
@@ -286,7 +317,7 @@ class MainWindow(QMainWindow):
         footer_layout = QHBoxLayout(footer_widget)
 
         # Adding text to footer
-        copyright_label = QLabel("\n© Pogromcy - rights reserved.")
+        copyright_label = QLabel("\n                            © Pogromcy - rights reserved.")
         font = QFont("Verdana", 10)
         copyright_label.setFont(font)
         footer_layout.addWidget(copyright_label)
@@ -294,54 +325,68 @@ class MainWindow(QMainWindow):
         # Adding footer to main widget
         lines_layout.addWidget(footer_widget)
 
+    def show_instructions(self):
+        ''' Shows small window with instruction '''
+        rules = """RULES:
+        \nGame is based on popular clickers like AdVenture Capitalist and Cookie Clicker.
+        You start with one course and you can earn your first ECTS point. 
+        After collecting enough point you can eiter upgrade already owned 
+        businesses (couses) to earn more from them, buy new (if avaliable) 
+        or buy automatization (you don't have to click to collect points), 
+        but last option will cost you 10 times starting cost of this course. 
+        Timer always says, how much time left until you can click earn button 
+        (or until you collect money by auto buy). 
+        Good luck and collect as many ECTS points as you can!"""
+        QMessageBox.information(self, "Instruction", rules)
+
     def on_click(self):
         ''' Defines actions after click on earn button '''
         index = self.buttons.index(self.sender())
         threading.Thread(target=timer,
                          args=(window.timer_labels[index],
-                         game.businesses[index].dur_time)).start()
+                         game.courses[index].dur_time)).start()
         self.buttons[index].setEnabled(False)
-        QTimer.singleShot(1000 * game.businesses[index].bus_delay,
+        QTimer.singleShot(1000 * game.courses[index].bus_delay,
                           lambda: self.buttons[index].setEnabled
-                          (not game.businesses[index].automatic))
-        game.businesses[index].earn()
+                          (not game.courses[index].automatic))
+        game.courses[index].earn()
 
     def on_buy(self):
         ''' Defines actions after click on buy button '''
         index = self.buy_buttons.index(self.sender())
-        if game.total >= game.businesses[index].cost:
+        if game.total >= game.courses[index].cost:
             self.buy_buttons[index].setEnabled(False)
             self.buttons[index].setEnabled(True)
-            buy_new(game.businesses[index])
+            buy_new(game.courses[index])
             self.ects_label.setText(str(game.total))
 
     def on_upgrade(self):
         ''' Defines actions after click on upgrade button '''
         index = self.upgrade_buttons.index(self.sender())
-        if game.total >= game.businesses[index].cost:
-            upgrade(game.businesses[index])
+        if game.total >= game.courses[index].cost:
+            upgrade(game.courses[index])
             self.ects_label.setText(str(game.total))
-            self.level_labels[index].setText(f'Level: {game.businesses[index].level}')
-            self.cost_labels[index].setText(f'Cost: {game.businesses[index].cost}')
+            self.level_labels[index].setText(f'Level: {game.courses[index].level}')
+            self.cost_labels[index].setText(f'Cost: {game.courses[index].cost}')
             earnings_per_sec = \
-                round(game.businesses[index].earnings / game.businesses[index].bus_delay)
+                round(game.courses[index].earnings / game.courses[index].bus_delay)
             self.earnings_labels[index].setText(f'Earnings/sec: {earnings_per_sec}')
 
     def on_auto(self):
         ''' Defines actions after click on autobuy button '''
         index = self.auto_buttons.index(self.sender())
-        if game.total >= 10 * game.businesses[index].start_cost:
+        if game.total >= 10 * game.courses[index].start_cost:
             self.buttons[index].setEnabled(False)
-            buy_auto(game.businesses[index])
+            buy_auto(game.courses[index])
             self.auto_buttons[index].setEnabled(False)
 
 
 if __name__ == "__main__":
     game = Game()
-    game.businesses[0].bought = True
-    buy_thread = threading.Thread(target=check_buy, daemon=True)
-    buy_thread.start()
+    game.courses[0].bought = True
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
+    buy_thread = threading.Thread(target=check_buy, daemon=True)
+    buy_thread.start()
     sys.exit(app.exec_())
